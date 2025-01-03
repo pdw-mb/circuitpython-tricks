@@ -1609,6 +1609,50 @@ print(os.uname().sysname)
     print("unsupported board", board_type)
   ```
 
+## Reducing boot time
+
+### Disable safe mode wait
+
+CircuitPython can be made to enter [safe mode][safemode] by pressing the reset
+button during a one second window at boot time. If your application is
+sensitive to boot time, this can be disabled by rebuilding CircuitPython with
+`CIRCUITPY_SKIP_SAFE_MODE_WAIT=1`, e.g.:
+
+```
+make BOARD=raspberry_pi_pico CIRCUITPY_SKIP_SAFE_MODE_WAIT=1
+```
+
+Obviously, you should make sure you have another way of recovering if you brick
+the device, such as wiping the flash via BOOTSEL mode on the Raspberry Pi Pico
+boards.
+
+[safemode]: https://learn.adafruit.com/circuitpython-safe-mode/safe-mode-reasons
+
+### Avoid debug output in boot.py
+
+Any output from `boot.py` is written to `boot_out.txt`. The file is only
+actually written if it is different to what is already on disk, and if it is
+written, there is a one second delay before writing the file.  Logging
+information that varies from one boot to the next will therefore slow down
+boot-up time.
+
+
+### Pre-compile Python with mpy-cross
+
+If you have a large amount of Python code, compiling the code can add a
+non-trivial delay to boot time. This can be reduced by pre-compiling your
+Python to bytecode (`.mpy` files) using mpy-cross, e.g.:
+
+```
+mpy-cross mylargelib.py
+```
+
+This will generate a `mylargelib.mpy` which will be used by an `import mylargelib` 
+statement. Note that a `.py` file will take precedence over a `.mpy` file, so
+you will need to remove the `.py` files from the device.
+
+Compiling to `.mpy` also reduces file size.
+
 ## Computery Tasks
 
 ### Formatting strings
